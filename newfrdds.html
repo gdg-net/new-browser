@@ -1,18 +1,21 @@
-
-<!DOCTYPE html>
+http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Auto Open Story & Redirect</title>
-    <script>
-      window.onload = function() {
-        // Open the Minecraft story in a new tab
-        window.open('minecraft-story.html', '_blank');
-        // Redirect this page to clever.com after opening the story
-        window.location.href = 'https://clever.com';
-      };
-    </script>
-  </head>
-  <body>
-    <p>If nothing happens, <a href="minecraft-story.html" target="_blank">open the Minecraft story</a> or <a href="https://clever.com">go to Clever</a>.</p>
-  </body>
+<head>
+<title>Auto Open Video & Redirect</title>
+<script>
+window.onload = function() {
+  // Replace 'YOUR_MP4_URL_HERE.mp4' with the actual direct link to an MP4 file
+  const videoUrl = 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4 ';
+  
+  // Open the funny MP4 in a new tab
+  window.open(videoUrl, '_blank');
+  
+  // Redirect this page to clever.com after opening the video
+  window.location.href = 'https://clever.com';
+};
+</script>
+</head>
+<body>
+<p>If nothing happens, <a href="YOUR_MP4_URL_HERE.mp4" target="_blank">open the funny video</a> or <a href="https://clever.com">go to Clever</a>.</p>
+</body>
 </html>
