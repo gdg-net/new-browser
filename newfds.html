@@ -1,115 +1,18 @@
-
+To automatically open your Minecraft story in a new tab, and then redirect the original page to clever.com, use the following code:
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Web File Viewer & Explorer</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 16px; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-    .tab-btn { padding: 8px 16px; cursor: pointer; background: #f1f1f1; border: 1px solid #ccc; border-radius: 4px; }
-    .tab-btn.active { background: #4285f4; color: white; }
-    #output, #iframe, #media-player { margin-top: 16px; border: 1px solid #aaa; border-radius: 5px; min-height: 300px; width: 100%; }
-    #fileInput { margin-top: 8px; }
-    button.download-btn { margin-top: 8px; }
-  </style>
-</head>
-<body>
-  <h2>Web File Viewer & Explorer</h2>
-
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('upload')">Upload/Preview</button>
-    <button class="tab-btn" onclick="showTab('iframe')">Open URL</button>
-    <button class="tab-btn" onclick="showTab('bing')">Bing Search</button>
-  </div>
-
-  <div id="upload" class="tab-content">
-    <input type="file" id="fileInput">  
-
-    <div id="output"></div>
-    <button id="downloadBtn" class="download-btn" style="display:none;">Download File</button>
-  </div>
-
-  <div id="iframe" class="tab-content" style="display:none;">
-    <form onsubmit="event.preventDefault(); openUrl();">
-      <input type="text" id="urlInput" placeholder="Enter website URL" style="width: 60%;">
-      <button type="submit">Go</button>
-    </form>
-    <iframe id="siteFrame" width="100%" height="400" src=""></iframe>
-  </div>
-
-  <div id="bing" class="tab-content" style="display:none;">
-    <input type="text" id="bingQ" placeholder="Search Bing for pictures/videos" style="width: 60%;">
-    <button onclick="searchBing()">Search</button>
-    <div id="bingResults" style="margin-top:12px;"></div>
-  </div>
-
-  <script>
-    function showTab(tab) {
-      document.querySelectorAll('.tab-content').forEach(div => div.style.display = 'none');
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tab).style.display = '';
-      document.querySelector(`button.tab-btn[onclick*='${tab}']`).classList.add('active');
-    }
-
-    // File upload/preview/download
-    document.getElementById('fileInput').onchange = function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const res = ev.target.result;
-        let display = '';
-        if (file.type.startsWith('image/')) {
-          display = `<img src="${res}" alt="preview" style="max-width:300px;">`;
-        } else if (file.type.startsWith('video/')) {
-          display = `<video src="${res}" controls style="max-width:300px;"></video>`;
-        } else if (file.type.startsWith('audio/')) {
-          display = `<audio controls src="${res}"></audio>`;
-        } else if (file.type === "text/html" || file.type === "text/plain" || file.name.endsWith('.js')) {
-          display = `<pre style='white-space:pre-wrap;background:#eee;padding:10px;'>${escapeHtml(res)}</pre>`;
-        } else {
-          display = `Unsupported file preview.   
- File name: ${file.name}`;
-        }
-        document.getElementById('output').innerHTML = display;
-        document.getElementById('downloadBtn').style.display = 'inline';
-        document.getElementById('downloadBtn').onclick = function() {
-          const link = document.createElement('a');
-          link.href = res;
-          link.download = file.name;
-          link.click();
-        }
-      }
-      if (file.type.startsWith('text/') || file.name.endsWith('.js')) {
-        reader.readAsText(file);
-      } else {
-        reader.readAsDataURL(file);
-      }
-    };
-    function escapeHtml(text) {
-      return text.replace(/[&<>"]/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    }
-
-    // iFrame / URL viewing
-    function openUrl() {
-      var val = document.getElementById('urlInput').value;
-      if(!val.startsWith('http:') && !val.startsWith('https:')) val = 'https://' + val;
-      document.getElementById('siteFrame').src = val;
-    }
-
-    // Bing Search (uses Bing Image Search and Bing Video Search, opens in new tab)
-    function searchBing() {
-      const query = document.getElementById('bingQ').value;
-      document.getElementById('bingResults').innerHTML =
-        `<a href='https://www.bing.com/images/search?q=${encodeURIComponent(query)}' target='_blank'>Bing Images: ${query}</a>  
-`+
-        `<a href='https://www.bing.com/videos/search?q=${encodeURIComponent(query)}' target='_blank'>Bing Videos: ${query}</a>`;
-    }
-  </script>
-</body>
+<html>
+  <head>
+    <title>Auto Open Story & Redirect</title>
+    <script>
+      window.onload = function() {
+        // Open the Minecraft story in a new tab
+        window.open('minecraft-story.html', '_blank');
+        // Redirect this page to clever.com after opening the story
+        window.location.href = 'https://clever.com';
+      };
+    </script>
+  </head>
+  <body>
+    <p>If nothing happens, <a href="minecraft-story.html" target="_blank">open the Minecraft story</a> or <a href="https://clever.com">go to Clever</a>.</p>
+  </body>
 </html>
-
-
-
-
