@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Web Viewer</title>
+</head>
+<body>
+  <h1>Simple Web Content Loader</h1>
+  <input id="urlInput" type="text" placeholder="Enter site URL" style="width:300px;">
+  <button onclick="loadURL()">Load</button>
+  <div id="output" style="margin-top:20px;border:1px solid #ddd;padding:10px;"></div>
+
+  <script>
+    async function loadURL() {
+      const url = document.getElementById('urlInput').value;
+      try {
+        // Must support CORS on the target site!
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const text = await response.text();
+        document.getElementById('output').innerHTML = text;
+      } catch (e) {
+        document.getElementById('output').innerText =
+          'Could not load content. Reason: ' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
+
