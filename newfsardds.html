@@ -1,21 +1,195 @@
-http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4 <!DOCTYPE html>
-<html>
-<head>
-<title>Auto Open Video & Redirect</title>
-<script>
-window.onload = function() {
-  // Replace 'YOUR_MP4_URL_HERE.mp4' with the actual direct link to an MP4 file
-  const videoUrl = 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4 ';
-  
-  // Open the funny MP4 in a new tab
-  window.open(videoUrl, '_blank');
-  
-  // Redirect this page to clever.com after opening the video
-  window.location.href = 'https://clever.com';
-};
-</script>
-</head>
-<body>
-<p>If nothing happens, <a href="YOUR_MP4_URL_HERE.mp4" target="_blank">open the funny video</a> or <a href="https://clever.com">go to Clever</a>.</p>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Rubik's Cube Self-Solving Animation</title>
+    <style>
+      body { margin: 0; overflow: hidden; background: #181A1B; }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // Rubik's cube parameters
+      const CUBE_SIZE = 3;
+      const CUBIE_SIZE = 0.96;
+      const SPACING = 1.01;
+
+      // Face colors: [R, L, U, D, F, B]
+      const FACE_COLORS = [
+        0xff3c28, // Red (Right)
+        0xffd500, // Yellow (Left)
+        0xffffff, // White (Up)
+        0x009b48, // Green (Down)
+        0x0051ba, // Blue (Front)
+        0xff5800  // Orange (Back)
+      ];
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x181a1b);
+
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+      );
+      camera.position.set(6, 6, 8);
+      camera.lookAt(0, 0, 0);
+
+      // Lighting
+      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambient);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      dirLight.position.set(5, 10, 7);
+      scene.add(dirLight);
+
+      // Rubik's cube group
+      const cubeGroup = new THREE.Group();
+      scene.add(cubeGroup);
+
+      // Helper: Create a single cubie
+      function createCubie(x, y, z) {
+        const materials = [];
+        // Order: [R, L, U, D, F, B]
+        for (let i = 0; i < 6; i++) {
+          let showColor = false;
+          if (i === 0 && x === 1) showColor = true;
+          if (i === 1 && x === -1) showColor = true;
+          if (i === 2 && y === 1) showColor = true;
+          if (i === 3 && y === -1) showColor = true;
+          if (i === 4 && z === 1) showColor = true;
+          if (i === 5 && z === -1) showColor = true;
+          if (showColor)
+            materials.push(new THREE.MeshLambertMaterial({ color: FACE_COLORS[i] }));
+          else
+            materials.push(new THREE.MeshLambertMaterial({ color: 0x222222 }));
+        }
+        const geometry = new THREE.BoxGeometry(CUBIE_SIZE, CUBIE_SIZE, CUBIE_SIZE);
+        return new THREE.Mesh(geometry, materials);
+      }
+
+      // Build 3x3x3 cube
+      let cubies = [];
+      for (let x = -1; x <= 1; x++) {
+        for (let y = -1; y <= 1; y++) {
+          for (let z = -1; z <= 1; z++) {
+            if (!(x === 0 && y === 0 && z === 0)) { // skip invisible core
+              let cubie = createCubie(x, y, z);
+              cubie.position.set(x * SPACING, y * SPACING, z * SPACING);
+              cubeGroup.add(cubie);
+              cubies.push(cubie);
+            }
+          }
+        }
+      }
+
+      // Helper: Get cubies by axis and layer
+      function selectCubies(axis, layer) {
+        return cubies.filter(cubie => Math.abs(cubie.position[axis] - (layer * SPACING)) < 0.01);
+      }
+
+      // Moves definition: axis (x/y/z), layer (-1/0/1), direction (1/-1)
+      const MOVES = [
+        { axis: 'y', layer: 1, dir: 1 },   // U
+        { axis: 'x', layer: 1, dir: 1 },   // R
+        { axis: 'z', layer: 1, dir: 1 },   // F
+        { axis: 'y', layer: -1, dir: -1 }, // D'
+        { axis: 'x', layer: -1, dir: -1 }, // L'
+        { axis: 'z', layer: -1, dir: -1 }  // B'
+      ];
+
+      // Generate a random scramble
+      let scramble = [];
+      for (let i = 0; i < 12; i++) {
+        scramble.push(MOVES[Math.floor(Math.random() * MOVES.length)]);
+      }
+      // For solving: reverse scramble with inverted directions
+      let solve = scramble.map(m => ({ axis: m.axis, layer: m.layer, dir: -m.dir })).reverse();
+      let allMoves = scramble.concat(solve);
+
+      let moveIndex = 0;
+      let rotating = false;
+      let rotateGroup = null;
+      let targetAngle = 0;
+      let currentAngle = 0;
+      let moveAxis = '';
+      let moveLayer = 0;
+      let moveDir = 1;
+      let moveCubies = [];
+      const ROTATE_SPEED = Math.PI / 45;
+
+      function startMove(move) {
+        rotating = true;
+        moveAxis = move.axis;
+        moveLayer = move.layer;
+        moveDir = move.dir;
+        moveCubies = selectCubies(moveAxis, moveLayer);
+        rotateGroup = new THREE.Group();
+        moveCubies.forEach(c => {
+          THREE.SceneUtils.attach(c, cubeGroup, rotateGroup);
+        });
+        scene.add(rotateGroup);
+        currentAngle = 0;
+        targetAngle = Math.PI / 2 * moveDir;
+      }
+
+      function finishMove() {
+        moveCubies.forEach(c => {
+          THREE.SceneUtils.detach(c, rotateGroup, cubeGroup);
+        });
+        scene.remove(rotateGroup);
+        rotateGroup = null;
+        rotating = false;
+        moveIndex++;
+      }
+
+      // Polyfill for SceneUtils for newer three.js
+      // Attach/Detach helpers using localToWorld/worldToLocal
+      THREE.SceneUtils = {
+        attach: function(child, parent, scene) {
+          scene.add(child);
+          child.position.copy(child.getWorldPosition(new THREE.Vector3()));
+          child.quaternion.copy(child.getWorldQuaternion(new THREE.Quaternion()));
+          parent.worldToLocal(child.position);
+          child.applyMatrix4(new THREE.Matrix4().getInverse(parent.matrixWorld));
+          parent.add(child);
+        },
+        detach: function(child, parent, scene) {
+          scene.add(child);
+          child.position.copy(child.getWorldPosition(new THREE.Vector3()));
+          child.quaternion.copy(child.getWorldQuaternion(new THREE.Quaternion()));
+        }
+      };
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        // Auto-rotate camera for nice effect
+        cubeGroup.rotation.y += 0.01;
+        // Handle moves
+        if (!rotating && moveIndex < allMoves.length) {
+          startMove(allMoves[moveIndex]);
+        }
+        if (rotating && rotateGroup) {
+          let step = ROTATE_SPEED;
+          if (Math.abs(currentAngle + step) >= Math.abs(targetAngle)) {
+            step = targetAngle - currentAngle;
+            rotating = false;
+          }
+          currentAngle += step;
+          rotateGroup.rotation[moveAxis] += step;
+          if (!rotating) {
+            setTimeout(finishMove, 100);
+          }
+        }
+        renderer.render(scene, camera);
+      }
+      animate();
+    </script>
+  </body>
 </html>
